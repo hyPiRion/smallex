@@ -18,16 +18,64 @@ general lexer library for Clojure/JVM, I'd recommend
 [ANTLR](http://www.antlr.org/). Hopefully I can someday recommend this lexer
 generator instead.
 
-## (Subsections go here)
+Smallex only emits an rather limited lexer as of now. I'll see if I can pop up a
+formal definition when the implementation is done.
 
-TODO:
-* What does the library do?
-* Why did you write it (or didn't use an existing solution)?
-* Who should be using it, and for what reasons?
-* How should it be used (how to build it, how to configure it, how to run it and get started)?
-* Where can additional information be found? (typically doc/tutorial.md)
-From [Don't be a jerk: Write documentation](http://ferd.ca/don-t-be-a-jerk-write-documentation.html)
-by Frederic Trottier-Hebert.
+## Usage
+
+This is best shown with the output from the help command.
+
+```
+usage: java -jar smallex.jar [-v|--version] [-h|--help] [-H|--langhelp lang]
+  [--loglevel level] [--logfile file] [-o|--out outdir] [-i|--inputfile file]
+  [--list-languages] [-l|--lang language] <language-specific options> ...
+
+Options
+
+ -v, --version
+     Prints Smallex' version name.
+
+ -h, --help
+     Prints this help.
+
+ -H, --langhelp
+     Prints additional information about the specific language, along with other
+     flags, the version number and its use.
+
+ --loglevel level
+     Specifies the logging level: NONE, INFO or DEBUG. Is by default INFO.
+
+ --logfile file
+     Sets the logfile to the specified file. If none is specified, logging is
+     sent to stdout.
+
+ --out, -o outdir
+     Sets the output directory, and places generated files in that directory. If
+     the directory or any parent directory does not exist, will generate those.
+     The output directory must be specified.
+
+ --inputfile, -i file
+     Specifies the file to read the lexer from.
+
+ --list-languages
+     Lists all languages (not necessarily programming languages) supported by
+     this version of smallex, along with their version number.
+
+ --lang, -l language
+     Specifies the language to emit for. Must be explicitly set if code is to be
+     generated.
+```
+
+Here is a quick example of how to use the tool: Say I have the file
+`lexer.smlx`, and want to generate a java->clojure lexer which should reside in
+the directory `mylexer`. Then, the following command is issued (assuming
+smallex.jar is in my current directory):
+
+```bash
+java -jar smallex.jar -i lexer.smlx --lang java->clojure --out mylexer \
+  --pkgname com.hypirion.mylexer
+```
+
 
 ## License
 
