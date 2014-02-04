@@ -76,6 +76,38 @@ java -jar smallex.jar -i lexer.smlx --lang java->clojure --out mylexer \
   --pkgname com.hypirion.mylexer
 ```
 
+TODO: explain how this goes.
+
+## A Small Taste of Smallex Syntax
+
+Smallex itself has a very "dumb" syntax. It consists of `def`, symbol names,
+operators, strings and numbers. Definitions start by saying `(def symbol-name
+expression)`. An expression is a lisp-like expression, which can use the
+operators `or`, `cat`, `star`.
+
+Here's a small example, attempting to read Clojure code.
+
+```lisp
+;; Singletons
+(def set-start "#{")
+(def map-start "{")
+(def map-end "}")
+(def vector-start "[")
+(def vector-end "]")
+(def list-start "(")
+(def list-end ")")
+;; Aliases
+(alias opt-sign (opt (or "+-")))
+(alias digits (cat (or "1" "2" "3" "4" "5" "6" "7" "8" "9" "0")
+                   (star (or "1" "2" "3" "4" "5" "6" "7" "8" "9" "0"))))
+;; compound definitions
+(def comment (cat ";" (star (not "\n") "\n"))
+(def ratio (cat opt-sign digits "/" digits))
+(def float (cat opt-sign digits (opt "." (opt digits))
+                (opt (or "e" "E") opt-sign digits)))
+```
+
+
 
 ## License
 
