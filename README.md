@@ -108,6 +108,11 @@ Here's a small example, attempting to read Clojure code.
 ```
 
 
+## Additional Information
+
+A complete manual will be found in `doc/manual.md`, and a quick tutorial in
+`doc/quick.md`. For a longer tutorial, `doc/tutorial.md` should cover general
+knowledge, and will point you to specific tutorials for specific languages.
 
 ## License
 
