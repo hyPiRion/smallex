@@ -1,0 +1,38 @@
+usage: java -jar smallex.jar [-v|--version] [-h|--help] [-H|--langhelp lang]
+  [--loglevel level] [--logfile file] [-o|--out outdir] [-i|--inputfile file]
+  [--list-languages] [-l|--lang language] <language-specific options> ...
+
+Options
+
+ -v, --version
+     Prints Smallex' version name.
+
+ -h, --help
+     Prints this help.
+
+ -H, --langhelp
+     Prints additional information about the specific language, along with other
+     flags, the version number and its use.
+
+ --loglevel level
+     Specifies the logging level: NONE, INFO or DEBUG. Is by default INFO.
+
+ --logfile file
+     Sets the logfile to the specified file. If none is specified, logging is
+     sent to stdout.
+
+ --out, -o outdir
+     Sets the output directory, and places generated files in that directory. If
+     the directory or any parent directory does not exist, will generate those.
+     The output directory must be specified.
+
+ --inputfile, -i file
+     Specifies the file to read the lexer from.
+
+ --list-languages
+     Lists all languages (not necessarily programming languages) supported by
+     this version of smallex, along with their version number.
+
+ --lang, -l language
+     Specifies the language to emit for. Must be explicitly set if code is to be
+     generated.
