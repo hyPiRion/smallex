@@ -54,8 +54,8 @@ Options
      the directory or any parent directory does not exist, will generate those.
      The output directory must be specified.
 
- --inputfile, -i file
-     Specifies the file to read the lexer from.
+ --in, -i file
+     Specifies the file to read the lexer definition from.
 
  --list-languages
      Lists all languages (not necessarily programming languages) supported by
