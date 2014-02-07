@@ -3,6 +3,8 @@
   :url "https://github.com/hyPiRion/smallex"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :java-source-paths ["java"]
+  :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.cli "0.3.1"]]
   :profiles {:dev {:plugins [[codox "0.6.4"]]
