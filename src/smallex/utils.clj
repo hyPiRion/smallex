@@ -1,15 +1,17 @@
 (ns smallex.utils
-  (:require [clojure.io :as io]
-            [clojure.java.io :as io])
-  (:import (java.io IOException)))
+  (:require [clojure.java.io :as io])
+  (:import (java.io File IOException)))
 
 (def root-dir (System/getProperty "user.dir"))
 (def ^:dynamic *cwd* root-dir)
 
 (defn file
-  "Returns a file, relative to the current working directory (*cwd*)."
+  "Returns a file. If the file is relative, it is relative to the current
+  working directory (*cwd*)."
   [fname]
-  (io/file *cwd* fname))
+  (if (.isAbsolute (File. fname))
+    (File. fname)
+    (io/file *cwd* fname)))
 
 (defn smallex-version []
   (with-open [reader (-> "META-INF/maven/smallex/smallex/pom.properties"
@@ -32,7 +34,7 @@
   (fn [fname]
     (try
       (f fname)
-      (catch (IOException ioe) nil))))
+      (catch IOException _ nil))))
 
 (def
   ^{:arglists '([fname])
