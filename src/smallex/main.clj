@@ -1,3 +1,8 @@
-(ns smallex.main)
+(ns smallex.main
+  (:require [smallex.parse-args :as arg])
+  (:gen-class))
 
-;; Place your "main" code here, and consider to rename the namespace too.
+(defn -main [& args]
+  (let [[argmap remainder] (arg/parse-args args)]
+    (prn argmap)
+    (prn remainder)))
