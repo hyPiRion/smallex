@@ -3,9 +3,13 @@ package com.hypirion.smallex;
 import java.io.Reader;
 import java.util.Iterator;
 
+import clojure.lang.Keyword;
+
 import com.hypirion.smallex.Item;
 
 public class SMLXLexer implements Iterator<Item> {
+    private static final Keyword ERROR = Keyword.intern(null, "error");
+
     private Reader reader;
 
     public SMLXLexer(Reader reader) {
@@ -19,11 +23,11 @@ public class SMLXLexer implements Iterator<Item> {
 
     @Override
     public Item next() {
-        return null;
+        return new Item(ERROR, "not yet implemented");
     }
 
     @Override
     public boolean hasNext() {
-        return false;
+        return true;
     }
 }
