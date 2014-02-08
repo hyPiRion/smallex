@@ -1,3 +1,5 @@
+package com.hypirion.smallex;
+
 import java.io.Reader;
 import java.util.Iterator;
 
