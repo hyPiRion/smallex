@@ -91,8 +91,9 @@ public class SMLXLexer implements Iterator<Item> {
                 removeWhitespace();
                 return PAREN_END_ITEM;
             case '"':
-                return lexCatString();
+                return lexString();
             case '[':
+                return lexCharSet();
             }
             // support symbols starting with alphabetic chars for now only.
             if (Character.isLetter(cur)) {
@@ -103,14 +104,70 @@ public class SMLXLexer implements Iterator<Item> {
         }
     }
 
-    private Item lexCatString() {
-        // parse cat-string here. Keep in mind escaping.
-        return null;
+    private Item lexString() {
+        // shave off first value
+        tryRead();
+        StringBuilder sb = new StringBuilder();
+        while (cur != '"') {
+            if (cur == '\\') {
+                tryRead();
+                switch (cur) {
+                case '\\':
+                case '"':
+                    sb.appendCodePoint(cur);
+                    break;
+                case 'n':
+                    sb.append('\n');
+                    break;
+                case 't':
+                    sb.append('\t');
+                    break;
+                case 'r':
+                    sb.append('\r');
+                    break;
+                }
+            } else {
+                sb.appendCodePoint(cur);
+            }
+            tryRead();
+        }
+        // flush out last '"'
+        tryRead();
+        removeWhitespace();
+        return new Item(STRING, sb.toString());
     }
 
-    private Item lexOrString() {
-        // parse or-string here. Keep in mind escaping.
-        return null;
+    private Item lexCharSet() {
+        // shave off first value
+        tryRead();
+        StringBuilder sb = new StringBuilder();
+        while (cur != ']') {
+            if (cur == '\\') {
+                tryRead();
+                switch (cur) {
+                case '\\':
+                case ']':
+                    sb.appendCodePoint(cur);
+                    break;
+                case 'n':
+                    sb.append('\n');
+                    break;
+                case 't':
+                    sb.append('\t');
+                    break;
+                case 'r':
+                    sb.append('\r');
+                    break;
+                }
+            } else {
+                sb.appendCodePoint(cur);
+            }
+            tryRead();
+        }
+        // flush out ']'
+        tryRead();
+        removeWhitespace();
+        return new Item(CHAR_SET, sb.toString());
     }
 
     private Item lexSymbol() {
