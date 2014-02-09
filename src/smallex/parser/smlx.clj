@@ -54,7 +54,7 @@
   type or a possible alias (symbol)."
   [[head-item & item-seq]]
   (should-exist head-item)
-  (cond (contains? #{:cat-string :or-string :symbol} (:type head-item))
+  (cond (contains? #{:string :char-set :symbol} (:type head-item))
         [item-seq head-item]
         (= (:type head-item) :paren-start)
         (end-paren parse-operation head-item item-seq)))

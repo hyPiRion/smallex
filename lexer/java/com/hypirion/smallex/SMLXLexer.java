@@ -19,8 +19,8 @@ public class SMLXLexer implements Iterator<Item> {
         PAREN_END = Keyword.intern(null, "paren-end"),
         OP = Keyword.intern(null, "op"),
         SYMBOL = Keyword.intern(null, "symbol"),
-        OR_STRING = Keyword.intern(null, "or-string"),
-        CAT_STRING = Keyword.intern(null, "cat-string");
+        CHAR_SET = Keyword.intern(null, "char-set"),
+        STRING = Keyword.intern(null, "string");
 
     private static final Keyword[] predefs;
     private static final Map<String, Item> predefined;
