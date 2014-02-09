@@ -83,8 +83,12 @@ public class SMLXLexer implements Iterator<Item> {
             case EOF:
                 return new Item(ERROR, "Unexpectedly found EOF.");
             case '(':
+                tryRead();
+                removeWhitespace();
                 return PAREN_START_ITEM;
             case ')':
+                tryRead();
+                removeWhitespace();
                 return PAREN_END_ITEM;
             case '"':
                 return lexCatString();
