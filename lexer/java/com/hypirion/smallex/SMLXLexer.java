@@ -18,10 +18,12 @@ public class SMLXLexer implements Iterator<Item> {
         PAREN_START = Keyword.intern(null, "paren-start"),
         PAREN_END = Keyword.intern(null, "paren-end"),
         OP = Keyword.intern(null, "op"),
-        SYMBOL = Keyword.intern(null, "symbol");
+        SYMBOL = Keyword.intern(null, "symbol"),
+        OR_STRING = Keyword.intern(null, "or-string"),
+        CAT_STRING = Keyword.intern(null, "cat-string");
 
     private static final Keyword[] predefs;
-    private static final Map<String, Keyword> predefined;
+    private static final Map<String, Item> predefined;
 
     static {
         String[] strPredefs = {"or", "cat", "star", "plus", "opt", "not", "def",
@@ -34,22 +36,29 @@ public class SMLXLexer implements Iterator<Item> {
         }
 
         // Create immutable predefined lookup table
-        Map<String, Keyword> temp = new HashMap<String, Keyword>();
+        Map<String, Item> temp = new HashMap<String, Item>();
         for (Keyword k : predefs) {
-            temp.put(k.getName(), k);
+            temp.put(k.getName(), new Item(k, k));
         }
-        predefined = Collections.<String, Keyword>unmodifiableMap(temp);
+        predefined = Collections.<String, Item>unmodifiableMap(temp);
     }
 
+    private static final Item
+        PAREN_START_ITEM = new Item(PAREN_START, "("),
+        PAREN_END_ITEM = new Item(PAREN_END, ")");
+
+    private static final int NOT_INITIALISED = -3;
+    private static final int IO_ERROR = -2;
+    private static final int EOF = -1;
+
     private Reader reader;
-    private StringBuilder str;
-    private char cur;
+    private int cur;
+    private IOException ioError;
 
     public SMLXLexer(Reader reader) {
         this.reader = reader;
-        str = new StringBuilder();
-        removeWhitespace();
-        readOne();
+        ioError = null;
+        cur = NOT_INITIALISED;
     }
 
     @Override
@@ -59,24 +68,85 @@ public class SMLXLexer implements Iterator<Item> {
 
     @Override
     public boolean hasNext() {
-        return cur != -1;
+        return cur != EOF;
     }
 
     @Override
     public Item next() {
-        // Clear up whitespace before returning.
-        return new Item(ERROR, "not yet implemented");
-    }
-
-    private void readOne() {
-        try {
-            cur = (char) reader.read();
-        } catch (IOException ioe) {
-            // TODO: do something smart here.
+        while (true) {
+            switch (cur) {
+            case NOT_INITIALISED:
+                init();
+                continue;
+            case IO_ERROR:
+                return new Item(ERROR, ioError);
+            case EOF:
+                return new Item(ERROR, "Unexpectedly found EOF.");
+            case '(':
+                return PAREN_START_ITEM;
+            case ')':
+                return PAREN_END_ITEM;
+            case '"':
+                return lexCatString();
+            case '[':
+            }
+            // support symbols starting with alphabetic chars for now only.
+            if (Character.isLetter((char) cur)) {
+                return lexSymbol();
+            }
         }
     }
 
-    private void removeWhitespace() {
+    private Item lexCatString() {
+        // parse cat-string here. Keep in mind escaping.
+        return null;
+    }
 
+    private Item lexOrString() {
+        // parse or-string here. Keep in mind escaping.
+        return null;
+    }
+
+    private Item lexSymbol() {
+        return null;
+    }
+
+    // Always called before data
+    private void removeWhitespace() {
+        while (true) {
+            // Remove whitespace
+            while (Character.isWhitespace(cur)) {
+                tryRead();
+            }
+            // Remove comments
+            if (cur == ';') {
+                do {
+                    tryRead();
+                } while (cur != '\n');
+            } else {
+                break;
+                // We're done removing whitespace if no ';' was found.
+            }
+        }
+    }
+
+    // Safe to call this one until -1 is returned. Has to check the ioError for
+    // non-null values though.
+    private void tryRead() {
+        try {
+            cur = reader.read();
+        } catch (IOException e) {
+            ioError = e;
+            cur = IO_ERROR;
+        }
+    }
+
+    // We could theoretically do this in the parser ctor, but would force
+    // reading early.
+    private void init() {
+        if (cur == NOT_INITIALISED) {
+            tryRead();
+            removeWhitespace();
+        }
     }
 }
