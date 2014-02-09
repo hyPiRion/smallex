@@ -7,4 +7,4 @@
   (let [[argmap remainder] (arg/parse-args args)]
     (prn argmap)
     (prn remainder)
-    (prn (->> (SMLXLexer. nil) iterator-seq (take 5)))))
+    (prn (->> (SMLXLexer. *in*) iterator-seq (take 5)))))
