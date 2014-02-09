@@ -6,7 +6,7 @@
   :source-paths ["src" "lexer/clj"]
   :java-source-paths ["lexer/java"]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
-  :prep-tasks ^:replace [["compile" "#\"com.\""]
+  :prep-tasks ^:replace [["compile" "com.hypirion.smallex"]
                          "javac" "compile"]
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.cli "0.3.1"]]
