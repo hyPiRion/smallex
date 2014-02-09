@@ -95,7 +95,7 @@ public class SMLXLexer implements Iterator<Item> {
             case '[':
             }
             // support symbols starting with alphabetic chars for now only.
-            if (Character.isLetter((char) cur)) {
+            if (Character.isLetter(cur)) {
                 return lexSymbol();
             }
             return new Item(ERROR,
@@ -114,7 +114,19 @@ public class SMLXLexer implements Iterator<Item> {
     }
 
     private Item lexSymbol() {
-        return null;
+        StringBuilder sb = new StringBuilder();
+        // TODO: Change to support Clojure-like symbol subset
+        do {
+            sb.appendCodePoint(cur);
+            tryRead();
+        } while (Character.isLetterOrDigit(cur));
+        removeWhitespace();
+        String sym = sb.toString();
+        if (predefined.containsKey(sym)) {
+            return predefined.get(sym);
+        } else {
+            return new Item(SYMBOL, sym);
+        }
     }
 
     // Always called before data
