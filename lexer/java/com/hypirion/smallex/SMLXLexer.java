@@ -98,6 +98,8 @@ public class SMLXLexer implements Iterator<Item> {
             if (Character.isLetter((char) cur)) {
                 return lexSymbol();
             }
+            return new Item(ERROR,
+                            String.format("unexpected char: '%c'", (char) cur));
         }
     }
 
