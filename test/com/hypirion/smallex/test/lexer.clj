@@ -6,7 +6,4 @@
 
 (deftest test-read
   (with-open [rdr (io/reader (io/resource "clojure.smlx"))]
-    (is (try
-          (doall (iterator-seq (SMLXLexer. rdr)))
-          true
-          (catch Exception _ false)))))
+    (is (not-any? #(= :error (:type %)) (iterator-seq (SMLXLexer. rdr))))))
