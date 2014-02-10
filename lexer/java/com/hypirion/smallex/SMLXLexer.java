@@ -91,9 +91,9 @@ public class SMLXLexer implements Iterator<Item> {
                 removeWhitespace();
                 return PAREN_END_ITEM;
             case '"':
-                return lexString();
+                return lexDelimited('"', STRING, "string");
             case '[':
-                return lexCharSet();
+                return lexDelimited(']', CHAR_SET, "char set");
             }
             // support symbols starting with alphabetic chars for now only.
             if (Character.isLetter(cur) || "+*%&?_-$!".indexOf(cur) >= 0) {
@@ -104,82 +104,12 @@ public class SMLXLexer implements Iterator<Item> {
         }
     }
 
-    private Item lexString() {
+    private Item lexDelimited(char end, Keyword delimitedType,
+                              String delimitedName) {
         // shave off first value
         tryRead();
         StringBuilder sb = new StringBuilder();
-        while (cur != '"') {
-            if (cur == '\\') {
-                tryRead();
-                switch (cur) {
-                case '\\':
-                case '"':
-                    sb.appendCodePoint(cur);
-                    break;
-                case 'n':
-                    sb.append('\n');
-                    break;
-                case 't':
-                    sb.append('\t');
-                    break;
-                case 'r':
-                    sb.append('\r');
-                    break;
-                case 'u':
-                    // next 4 chars should be hex
-                    int code = 0;
-                    for (int i = 0; i < 4; i++) {
-                        tryRead();
-                        int conv = Character.digit(cur, 0x10);
-                        if (conv == -1){
-                            switch (cur) {
-                            case IO_ERROR:
-                                return error(ioError);
-                            case EOF:
-                                return error("Expected 4 hexadecimal values, but " +
-                                             "got EOF within unicode escaping.");
-                            }
-                            return error("Malformed unicode escape: " +
-                                         String.format("Character '%c' was given", cur));
-                        } else {
-                            code = 0x10 * code + conv;
-                        }
-                    }
-                    // conversion went well, insert converted value into string:
-                    sb.appendCodePoint(code);
-                    break;
-                case EOF:
-                    return error("Assumed quoted character after " +
-                                 "backslash (\\) in string, but was EOF.");
-                case IO_ERROR:
-                    return error(ioError);
-                default:
-                    return error("Unknown quoted character after backslash " +
-                                 String.format("(\\) in string ('%c').", cur));
-                }
-            } else {
-                switch (cur) {
-                case EOF:
-                    return error("Found end of file, but string is still open.");
-                case IO_ERROR:
-                    return error(ioError);
-                default:
-                    sb.appendCodePoint(cur);
-                }
-            }
-            tryRead();
-        }
-        // flush out last '"'
-        tryRead();
-        removeWhitespace();
-        return new Item(STRING, sb.toString());
-    }
-
-    private Item lexCharSet() {
-        // shave off first value
-        tryRead();
-        StringBuilder sb = new StringBuilder();
-        while (cur != ']') {
+        while (cur != end) {
             if (cur == '\\') {
                 tryRead();
                 switch (cur) {
@@ -234,7 +164,8 @@ public class SMLXLexer implements Iterator<Item> {
             } else {
                 switch (cur) {
                 case EOF:
-                    return error("Found end of file, but char set is still open.");
+                    return error(String.format("Found end of file, but %s is still open.",
+                                               delimitedName));
                 case IO_ERROR:
                     return error(ioError);
                 default:
@@ -246,7 +177,7 @@ public class SMLXLexer implements Iterator<Item> {
         // flush out ']'
         tryRead();
         removeWhitespace();
-        return new Item(CHAR_SET, sb.toString());
+        return new Item(delimitedType, sb.toString());
     }
 
     private Item lexSymbol() {
