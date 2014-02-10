@@ -96,7 +96,7 @@ public class SMLXLexer implements Iterator<Item> {
                 return lexCharSet();
             }
             // support symbols starting with alphabetic chars for now only.
-            if (Character.isLetter(cur)) {
+            if (Character.isLetter(cur) || "+*%&?_-$!".indexOf(cur) >= 0) {
                 return lexSymbol();
             }
             return new Item(ERROR,
@@ -255,7 +255,8 @@ public class SMLXLexer implements Iterator<Item> {
         do {
             sb.appendCodePoint(cur);
             tryRead();
-        } while (Character.isLetterOrDigit(cur));
+        } while (Character.isLetterOrDigit(cur) ||
+                 "+*%&?_-$!'/".indexOf(cur) >= 0);
         if (cur == IO_ERROR) {
             return error(ioError);
         }
