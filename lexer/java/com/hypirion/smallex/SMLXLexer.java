@@ -162,7 +162,10 @@ public class SMLXLexer implements Iterator<Item> {
                 tryRead();
                 switch (cur) {
                 case '\\':
+                case '[':
                 case ']':
+                case '"':
+                case ';':
                     sb.appendCodePoint(cur);
                     break;
                 case 'n':
