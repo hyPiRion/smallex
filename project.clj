@@ -11,7 +11,8 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.cli "0.3.1"]]
   :profiles {:dev {:plugins [[codox "0.6.4"]]
-                   :codox {:output-dir "codox"}}
+                   :codox {:output-dir "codox"}
+                   :resource-paths ["test-grammars"]}
              :uberjar {:aot :all}}
   :deploy-branches ["stable"]
   :main smallex.main)

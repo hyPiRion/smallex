@@ -1,0 +1,64 @@
+;; Attempted smallex definition. Not fully complete.
+(alias any-char (not []))
+(alias dig19 [123456789])
+(alias digit [0123456789])
+(alias digits (plus digit))
+(alias hex (or digit [abcdefABCDEF]))
+
+(alias alpha [abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ])
+(alias alphanum (or digit alpha))
+
+(def paren-start "(")
+(def paren-end ")")
+(def vec-start "[")
+(def vec-end "]")
+(def map-start "{")
+(def map-end "}")
+(def set-start "#{")
+
+(def ratio (cat (opt [+-]) digits "/" digits))
+(alias int' (cat (opt [+-])
+                 (or (cat dig19 (opt digit) [rR] alphanum)
+                     (cat "0" [xX] (plus hex))
+                     digits)))
+(def int int')
+
+(alias float' (cat (opt [+-])
+                   digits
+                   (opt "." (star digit))
+                   (opt [eE] (opt [-+]) digits)))
+(def float float')
+
+(def big (or (cat int' "N")
+             (cat float' "M")))
+
+(alias string' (cat "\"" (star (or "\\\"" "\\\\" (not [\\\"]))) "\""))
+(def string string')
+(def regex (cat "#" string'))
+;; ^ string + regex doesn't cover all escape sequences
+
+(def char (cat "\\" (or "newline" "space" "tab" "backspace" "formfeed" "return"
+                        any-char)))
+
+(alias illegal-in-sym (or [\\@~()\[\]{}^\;:/] whitespace))
+(alias legal-after-first (or ['] digit))
+(alias sym-pat (or "/" ;; / is special cased
+                   (cat (not (or illegal-in-sym legal-after-first))
+                        (star (not illegal-in-sym))
+                        "/"
+                        (opt (or "/"
+                                 (cat (not (or illegal-in-sym legal-after-first))
+                                      (star (not illegal-in-sym))))))))
+
+(def comment (cat ";" (star (not [\n]))))
+(def whitespace ;; Not sure this is exhaustive
+  (star [, \u0009\u000A\u000B\u000C\u000D\u001C\u001D\u001E\u001F]))
+
+(def quote "'")
+(def unquote "~")
+(def unquote-splice "~@")
+(def meta "^")
+(def var "#'")
+
+(def sharp "#")
+
