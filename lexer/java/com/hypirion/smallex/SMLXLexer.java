@@ -209,6 +209,9 @@ public class SMLXLexer implements Iterator<Item> {
             sb.appendCodePoint(cur);
             tryRead();
         } while (Character.isLetterOrDigit(cur));
+        if (cur == IO_ERROR) {
+            return new Item(ERROR, ioError);
+        }
         removeWhitespace();
         String sym = sb.toString();
         if (predefined.containsKey(sym)) {
