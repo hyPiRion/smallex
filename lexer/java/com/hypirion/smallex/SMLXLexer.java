@@ -125,9 +125,25 @@ public class SMLXLexer implements Iterator<Item> {
                 case 'r':
                     sb.append('\r');
                     break;
+                case EOF:
+                    return new Item(ERROR, "Assumed quoted character after " +
+                                    "backslash (\\) in string, but was EOF.");
+                case IO_ERROR:
+                    return new Item(ERROR, ioError);
+                default:
+                    return new Item(ERROR, "Unknown quoted character after " +
+                                    String.format("backslash (\\) in string ('%c').", cur));
                 }
             } else {
-                sb.appendCodePoint(cur);
+                switch (cur) {
+                case EOF:
+                    return new Item(ERROR, "Found end of file, but string" +
+                                    " is still open.");
+                case IO_ERROR:
+                    return new Item(ERROR, ioError);
+                default:
+                    sb.appendCodePoint(cur);
+                }
             }
             tryRead();
         }
@@ -158,9 +174,25 @@ public class SMLXLexer implements Iterator<Item> {
                 case 'r':
                     sb.append('\r');
                     break;
+                case EOF:
+                    return new Item(ERROR, "Assumed quoted character after " +
+                                    "backslash (\\) in char set, but was EOF.");
+                case IO_ERROR:
+                    return new Item(ERROR, ioError);
+                default:
+                    return new Item(ERROR, "Unknown quoted character after " +
+                                    String.format("backslash (\\) in char set ('%c').", cur));
                 }
             } else {
-                sb.appendCodePoint(cur);
+                switch (cur) {
+                case EOF:
+                    return new Item(ERROR, "Found end of file, but char set " +
+                                    "is still open.");
+                case IO_ERROR:
+                    return new Item(ERROR, ioError);
+                default:
+                    sb.appendCodePoint(cur);
+                }
             }
             tryRead();
         }
