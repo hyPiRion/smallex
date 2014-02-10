@@ -79,9 +79,9 @@ public class SMLXLexer implements Iterator<Item> {
                 init();
                 continue;
             case IO_ERROR:
-                return new Item(ERROR, ioError);
+                return error(ioError);
             case EOF:
-                return new Item(ERROR, "Unexpectedly found EOF.");
+                return error("Unexpectedly found EOF.");
             case '(':
                 tryRead();
                 removeWhitespace();
@@ -134,13 +134,13 @@ public class SMLXLexer implements Iterator<Item> {
                         if (conv == -1){
                             switch (cur) {
                             case IO_ERROR:
-                                return new Item(ERROR, ioError);
+                                return error(ioError);
                             case EOF:
-                                return new Item(ERROR, "Expected 4 hexadecimal"+
-                                                " values, but got EOF within unicode escaping.");
+                                return error("Expected 4 hexadecimal values, but " +
+                                             "got EOF within unicode escaping.");
                             }
-                            return new Item(ERROR, "Malformed unicode escape: " +
-                                            String.format("Character '%c' was given", cur));
+                            return error("Malformed unicode escape: " +
+                                         String.format("Character '%c' was given", cur));
                         } else {
                             code = 0x10 * code + conv;
                         }
@@ -149,21 +149,20 @@ public class SMLXLexer implements Iterator<Item> {
                     sb.appendCodePoint(code);
                     break;
                 case EOF:
-                    return new Item(ERROR, "Assumed quoted character after " +
-                                    "backslash (\\) in string, but was EOF.");
+                    return error("Assumed quoted character after " +
+                                 "backslash (\\) in string, but was EOF.");
                 case IO_ERROR:
-                    return new Item(ERROR, ioError);
+                    return error(ioError);
                 default:
-                    return new Item(ERROR, "Unknown quoted character after " +
-                                    String.format("backslash (\\) in string ('%c').", cur));
+                    return error("Unknown quoted character after backslash " +
+                                 String.format("(\\) in string ('%c').", cur));
                 }
             } else {
                 switch (cur) {
                 case EOF:
-                    return new Item(ERROR, "Found end of file, but string" +
-                                    " is still open.");
+                    return error("Found end of file, but string is still open.");
                 case IO_ERROR:
-                    return new Item(ERROR, ioError);
+                    return error(ioError);
                 default:
                     sb.appendCodePoint(cur);
                 }
@@ -209,13 +208,13 @@ public class SMLXLexer implements Iterator<Item> {
                         if (conv == -1){
                             switch (cur) {
                             case IO_ERROR:
-                                return new Item(ERROR, ioError);
+                                return error(ioError);
                             case EOF:
-                                return new Item(ERROR, "Expected 4 hexadecimal"+
-                                                " values, but got EOF within unicode escaping.");
+                                return error("Expected 4 hexadecimal values, but "+
+                                             "got EOF within unicode escaping.");
                             }
-                            return new Item(ERROR, "Malformed unicode escape: " +
-                                            String.format("Character '%c' was given", cur));
+                            return error("Malformed unicode escape: " +
+                                         String.format("Character '%c' was given", cur));
                         } else {
                             code = 0x10 * code + conv;
                         }
@@ -224,21 +223,20 @@ public class SMLXLexer implements Iterator<Item> {
                     sb.appendCodePoint(code);
                     break;
                 case EOF:
-                    return new Item(ERROR, "Assumed quoted character after " +
-                                    "backslash (\\) in char set, but was EOF.");
+                    return error("Assumed quoted character after " +
+                                 "backslash (\\) in char set, but was EOF.");
                 case IO_ERROR:
-                    return new Item(ERROR, ioError);
+                    return error(ioError);
                 default:
-                    return new Item(ERROR, "Unknown quoted character after " +
-                                    String.format("backslash (\\) in char set ('%c').", cur));
+                    return error("Unknown quoted character after " +
+                                 String.format("backslash (\\) in char set ('%c').", cur));
                 }
             } else {
                 switch (cur) {
                 case EOF:
-                    return new Item(ERROR, "Found end of file, but char set " +
-                                    "is still open.");
+                    return error("Found end of file, but char set is still open.");
                 case IO_ERROR:
-                    return new Item(ERROR, ioError);
+                    return error(ioError);
                 default:
                     sb.appendCodePoint(cur);
                 }
@@ -259,7 +257,7 @@ public class SMLXLexer implements Iterator<Item> {
             tryRead();
         } while (Character.isLetterOrDigit(cur));
         if (cur == IO_ERROR) {
-            return new Item(ERROR, ioError);
+            return error(ioError);
         }
         removeWhitespace();
         String sym = sb.toString();
@@ -308,4 +306,15 @@ public class SMLXLexer implements Iterator<Item> {
             removeWhitespace();
         }
     }
+
+    private Item error(String errmsg) {
+        cur = EOF;
+        return new Item(ERROR, errmsg);
+    }
+    
+    private Item error(IOException ioe) {
+        cur = EOF;
+        return new Item(ERROR, ioe);
+    }
+
 }
