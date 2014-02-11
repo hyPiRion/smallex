@@ -38,27 +38,31 @@ public class SMLXLexer implements Iterator<Item> {
         // Create immutable predefined lookup table
         Map<String, Item> temp = new HashMap<String, Item>();
         for (Keyword k : predefs) {
-            temp.put(k.getName(), new Item(k, k));
+            temp.put(k.getName(), new Item(k, k, 0, 0));
         }
         predefined = Collections.<String, Item>unmodifiableMap(temp);
     }
 
     private static final Item
-        PAREN_START_ITEM = new Item(PAREN_START, "("),
-        PAREN_END_ITEM = new Item(PAREN_END, ")");
+        PAREN_START_ITEM = new Item(PAREN_START, "(", 0, 0),
+        PAREN_END_ITEM = new Item(PAREN_END, ")", 0, 0);
 
     private static final int NOT_INITIALISED = -3;
     private static final int IO_ERROR = -2;
     private static final int EOF = -1;
 
     private Reader reader;
-    private int cur;
+    private int cur, start_line, line, col, start_col;
     private IOException ioError;
 
     public SMLXLexer(Reader reader) {
         this.reader = reader;
         ioError = null;
         cur = NOT_INITIALISED;
+        start_line = 1;
+        line = 1;
+        start_col = 0;
+        col = -1;
     }
 
     @Override
@@ -68,6 +72,9 @@ public class SMLXLexer implements Iterator<Item> {
 
     @Override
     public boolean hasNext() {
+        if (cur == NOT_INITIALISED) {
+            init();
+        }
         return cur != EOF;
     }
 
@@ -84,12 +91,10 @@ public class SMLXLexer implements Iterator<Item> {
                 return error("Unexpectedly found EOF.");
             case '(':
                 tryRead();
-                removeWhitespace();
-                return PAREN_START_ITEM;
+                return item(PAREN_START_ITEM);
             case ')':
                 tryRead();
-                removeWhitespace();
-                return PAREN_END_ITEM;
+                return item(PAREN_END_ITEM);
             case '"':
                 return lexDelimited('"', STRING, "string");
             case '[':
@@ -99,8 +104,7 @@ public class SMLXLexer implements Iterator<Item> {
             if (Character.isLetter(cur) || "+*%&?_-$!".indexOf(cur) >= 0) {
                 return lexSymbol();
             }
-            return new Item(ERROR,
-                            String.format("unexpected char: '%c'", (char) cur));
+            return error(String.format("unexpected char: '%c'", (char) cur));
         }
     }
 
@@ -176,8 +180,7 @@ public class SMLXLexer implements Iterator<Item> {
         }
         // flush out ']'
         tryRead();
-        removeWhitespace();
-        return new Item(delimitedType, sb.toString());
+        return item(delimitedType, sb.toString());
     }
 
     private Item lexSymbol() {
@@ -191,12 +194,11 @@ public class SMLXLexer implements Iterator<Item> {
         if (cur == IO_ERROR) {
             return error(ioError);
         }
-        removeWhitespace();
         String sym = sb.toString();
         if (predefined.containsKey(sym)) {
-            return predefined.get(sym);
+            return item(predefined.get(sym));
         } else {
-            return new Item(SYMBOL, sym);
+            return item(SYMBOL, sym);
         }
     }
 
@@ -224,6 +226,14 @@ public class SMLXLexer implements Iterator<Item> {
     private void tryRead() {
         try {
             cur = reader.read();
+            col++;
+            if (cur == '\n') {
+                // LineNumberReader does this differently. Not sure if it's
+                // justified to implement such functionality or wrap the reader
+                // in a LineNumberReader.
+                line++;
+                col = -1;
+            }
         } catch (IOException e) {
             ioError = e;
             cur = IO_ERROR;
@@ -241,12 +251,24 @@ public class SMLXLexer implements Iterator<Item> {
 
     private Item error(String errmsg) {
         cur = EOF;
-        return new Item(ERROR, errmsg);
+        return item(ERROR, errmsg);
     }
     
     private Item error(IOException ioe) {
         cur = EOF;
-        return new Item(ERROR, ioe);
+        return item(ERROR, ioe);
     }
 
+    private Item item(Keyword type, Object value) {
+        Item it = new Item(type, value, start_line, start_col);
+        removeWhitespace();
+        // Next item—if existing—should be starting at current position.
+        start_line = line;
+        start_col = col;
+        return it;
+    }
+
+    private Item item(Item basis) {
+        return item((Keyword) basis.type, basis.value);
+    }
 }
