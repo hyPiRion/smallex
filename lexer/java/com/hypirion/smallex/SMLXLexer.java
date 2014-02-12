@@ -134,7 +134,7 @@ public class SMLXLexer implements Iterator<Item> {
                 case 'r':
                     sb.append('\r');
                     break;
-                case 'u':
+                case 'u': {
                     // next 4 chars should be hex
                     int code = 0;
                     for (int i = 0; i < 4; i++) {
@@ -157,6 +157,31 @@ public class SMLXLexer implements Iterator<Item> {
                     // conversion went well, insert converted value into string:
                     sb.appendCodePoint(code);
                     break;
+                }
+                case 'x': {
+                    // next 2 chars should be hex
+                    int code = 0;
+                    for (int i = 0; i < 4; i++) {
+                        tryRead();
+                        int conv = Character.digit(cur, 0x10);
+                        if (conv == -1){
+                            switch (cur) {
+                            case IO_ERROR:
+                                return error(ioError);
+                            case EOF:
+                                return error("Expected 4 hexadecimal values, but "+
+                                             "got EOF within unicode escaping.");
+                            }
+                            return error("Malformed unicode escape: " +
+                                         String.format("Character '%c' was given", cur));
+                        } else {
+                            code = 0x10 * code + conv;
+                        }
+                    }
+                    // conversion went well, insert converted value into string:
+                    sb.appendCodePoint(code);
+                    break;
+                }
                 case EOF:
                     return error("Assumed quoted character after " +
                                  "backslash (\\) in char set, but was EOF.");
