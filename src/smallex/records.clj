@@ -2,4 +2,4 @@
 
 (defrecord Grammar [rules aliases])
 
-(defrecord Expression [op args])
+(defrecord Operation [type value args ^long line ^long col])

@@ -1,6 +1,6 @@
 (ns smallex.parser.smlx
   (:require [smallex.records :as r])
-  (:import (smallex.records Grammar Expression)))
+  (:import (smallex.records Grammar Operation)))
 
 (declare parse-root parse-definition parse-expr parse-operation parse-args
          end-paren should-exist)
@@ -69,7 +69,7 @@
     (let [[rem-seq args] (parse-args item-seq [])]
       ;; Should we retain op item here? Sounds reasonable to at least have the
       ;; position it was defined for better error msg later.
-      [rem-seq (r/map->Expression {:op (:value op), :args args})])))
+      [rem-seq (r/map->Operation (assoc op :args args))])))
 
 (defn- parse-args
   "Parses legal expressions until a closing paren is found, then returning
