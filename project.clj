@@ -12,6 +12,7 @@
                  [org.clojure/tools.cli "0.3.1"]]
   :profiles {:dev {:plugins [[codox "0.6.4"]]
                    :codox {:output-dir "codox"}
+                   :dependencies [[reiddraper/simple-check "0.5.6"]]
                    :resource-paths ["test-grammars"]}
              :uberjar {:aot :all}}
   :deploy-branches ["stable"]
