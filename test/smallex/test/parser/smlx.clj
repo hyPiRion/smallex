@@ -39,4 +39,11 @@
                (->> item-seq
                     (filter-afterv #(= :def (:type %)))
                     (map :value)
-                    set)))))))
+                    set))))
+      (testing "rules in grammar is prioritised by ordering from grammar file"
+        (is (= (->> (:rules grammar)
+                    (sort-by (fn [[_ expr]] (-> expr meta :priority)))
+                    (map key))
+               (->> item-seq
+                    (filter-afterv #(= :def (:type %)))
+                    (map :value))))))))
