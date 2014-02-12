@@ -45,8 +45,8 @@
   (if (some #(contains? % (:value name-item)) (vals grammar))
     (throw (ex-info "Definition already exists." name-item))
     (let [[rem-seq expr] (end-paren parse-expr item-seq)
-          updated-grammar (assoc grammar (grammar-key definition-type)
-                                 (:value name-item) expr)]
+          updated-grammar (assoc-in grammar [(grammar-key definition-type)
+                                             (:value name-item)] expr)]
       [rem-seq updated-grammar])))
 
 (defn- parse-expr
@@ -57,7 +57,7 @@
   (cond (contains? #{:string :char-set :symbol} (:type head-item))
         [item-seq head-item]
         (= (:type head-item) :paren-start)
-        (end-paren parse-operation head-item item-seq)))
+        (end-paren parse-operation (first item-seq) (rest item-seq))))
 
 (defn- parse-operation
   "Parses an operation, which is some known operator along with several
@@ -77,7 +77,7 @@
   [[head :as item-seq] args]
   (should-exist head)
   (if (= (:type head) :paren-end)
-    [(rest item-seq) args]
+    [item-seq args]
     (let [[rem-seq expr] (parse-expr item-seq)]
       (recur rem-seq (conj args expr)))))
 
