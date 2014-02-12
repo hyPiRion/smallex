@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Collections;
 
 import clojure.lang.Keyword;
+import clojure.lang.PersistentArrayMap;
 
 import com.hypirion.smallex.Item;
 
@@ -20,7 +21,9 @@ public class SMLXLexer implements Iterator<Item> {
         OP = Keyword.intern(null, "op"),
         SYMBOL = Keyword.intern(null, "symbol"),
         CHAR_SET = Keyword.intern(null, "char-set"),
-        STRING = Keyword.intern(null, "string");
+        STRING = Keyword.intern(null, "string"),
+        COL = Keyword.intern(null, "col"),
+        LINE = Keyword.intern(null, "line");
 
     private static final Map<String, Item> predefined;
 
@@ -32,18 +35,18 @@ public class SMLXLexer implements Iterator<Item> {
         Map<String, Item> temp = new HashMap<String, Item>();
         for (String op : ops) {
             Keyword k = Keyword.intern(null, op);
-            temp.put(op, new Item(OP, k, 0, 0));
+            temp.put(op, new Item(OP, k));
         }
         for (String o : other) {
             Keyword k = Keyword.intern(null, o);
-            temp.put(o, new Item(k, k, 0, 0));
+            temp.put(o, new Item(k, k));
         }
         predefined = Collections.<String, Item>unmodifiableMap(temp);
     }
 
     private static final Item
-        PAREN_START_ITEM = new Item(PAREN_START, "(", 0, 0),
-        PAREN_END_ITEM = new Item(PAREN_END, ")", 0, 0);
+        PAREN_START_ITEM = new Item(PAREN_START, "("),
+        PAREN_END_ITEM = new Item(PAREN_END, ")");
 
     private static final int NOT_INITIALISED = -3;
     private static final int IO_ERROR = -2;
@@ -258,7 +261,7 @@ public class SMLXLexer implements Iterator<Item> {
     }
 
     private Item item(Keyword type, Object value) {
-        Item it = new Item(type, value, start_line, start_col);
+        Item it = (Item) new Item(type, value).withMeta(metaMap());
         removeWhitespace();
         // Next item—if existing—should be starting at current position.
         start_line = line;
@@ -268,5 +271,10 @@ public class SMLXLexer implements Iterator<Item> {
 
     private Item item(Item basis) {
         return item((Keyword) basis.type, basis.value);
+    }
+
+    private PersistentArrayMap metaMap() {
+        Object[] data = new Object[]{LINE, start_line, COL, start_col};
+        return PersistentArrayMap.createWithCheck(data);
     }
 }

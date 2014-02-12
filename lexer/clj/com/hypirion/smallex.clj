@@ -2,4 +2,4 @@
 (ns com.hypirion.smallex
   (:import (clojure.lang Keyword)))
 
-(defrecord Item [^Keyword type value ^long line ^long col])
+(defrecord Item [^Keyword type value])

@@ -69,7 +69,8 @@
     (let [[rem-seq args] (parse-args item-seq [])]
       ;; Should we retain op item here? Sounds reasonable to at least have the
       ;; position it was defined for better error msg later.
-      [rem-seq (r/map->Operation (assoc op :args args))])))
+      [rem-seq (with-meta (r/map->Operation (assoc op :args args))
+                 (meta op))])))
 
 (defn- parse-args
   "Parses legal expressions until a closing paren is found, then returning
