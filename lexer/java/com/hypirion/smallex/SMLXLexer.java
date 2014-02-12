@@ -22,23 +22,21 @@ public class SMLXLexer implements Iterator<Item> {
         CHAR_SET = Keyword.intern(null, "char-set"),
         STRING = Keyword.intern(null, "string");
 
-    private static final Keyword[] predefs;
     private static final Map<String, Item> predefined;
 
     static {
-        String[] strPredefs = {"or", "cat", "star", "plus", "opt", "not", "def",
-                               "alias"};
-
-        // Create and populate predefs
-        predefs = new Keyword[strPredefs.length];
-        for (int i = 0; i < strPredefs.length; i++) {
-            predefs[i] = Keyword.intern(null, strPredefs[i]);
-        }
+        String[] ops = {"or", "cat", "star", "plus", "opt", "not"};
+        String[] other = {"def", "alias"};
 
         // Create immutable predefined lookup table
         Map<String, Item> temp = new HashMap<String, Item>();
-        for (Keyword k : predefs) {
-            temp.put(k.getName(), new Item(k, k, 0, 0));
+        for (String op : ops) {
+            Keyword k = Keyword.intern(null, op);
+            temp.put(op, new Item(OP, k, 0, 0));
+        }
+        for (String o : other) {
+            Keyword k = Keyword.intern(null, o);
+            temp.put(o, new Item(k, k, 0, 0));
         }
         predefined = Collections.<String, Item>unmodifiableMap(temp);
     }
