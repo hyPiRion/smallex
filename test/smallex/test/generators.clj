@@ -156,8 +156,7 @@
                            (for [[k v p] (mapv conj (shuffle (vec m)) (range))]
                              [k (vary-meta v assoc :priority p)])))))))
 
-
-(deftest ^:examples test-grammar-generation
+(def grammar
   (->>
    (gen/bind (gen/sized aliases)
              (fn [alias-defs]
@@ -167,6 +166,8 @@
                {:aliases (into {}
                                (for [[k v] aliases]
                                  [(:value k) v]))
-                :rules rules}))
-   gen/sample
-   ppm))
+                :rules rules}))))
+
+
+(deftest ^:examples test-grammar-generation
+  (ppm (gen/sample grammar)))
