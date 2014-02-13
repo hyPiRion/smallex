@@ -149,7 +149,7 @@
                                            (Character/isLetter (first %))
                                            (not (contains? alias-names %)))
                                      (gen/resize 20 gen/string-alpha-numeric))]
-    (->> (gen/map rule-name-gen alias-gen)
+    (->> (gen/map rule-name-gen (expression alias-gen))
          (gen/not-empty)
          (gen/fmap (fn [m] ;; tag on priority on rules
                      (into {}
