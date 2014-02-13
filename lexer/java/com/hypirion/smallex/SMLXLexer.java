@@ -161,7 +161,7 @@ public class SMLXLexer implements Iterator<Item> {
                 case 'x': {
                     // next 2 chars should be hex
                     int code = 0;
-                    for (int i = 0; i < 4; i++) {
+                    for (int i = 0; i < 2; i++) {
                         tryRead();
                         int conv = Character.digit(cur, 0x10);
                         if (conv == -1){
