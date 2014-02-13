@@ -106,4 +106,4 @@
   (cond (nil? item)
         (throw (ex-info "Unexpected end of grammar." {}))
         (= (:type item) :error)
-        (throw (ex-info "Lexer returned an error item." item))))
+        (throw (ex-info "Lexer returned an error item." (conj {} item)))))
