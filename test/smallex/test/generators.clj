@@ -149,7 +149,11 @@
                                            (Character/isLetter (first %))
                                            (not (contains? alias-names %)))
                                      (gen/resize 20 gen/string-alpha-numeric))]
-    (gen/map rule-name-gen alias-gen)))
+    (->> (gen/map rule-name-gen alias-gen)
+         (gen/fmap (fn [m] ;; tag on priority on rules
+                     (into {}
+                           (for [[k v p] (mapv conj (shuffle (vec m)) (range))]
+                             [k (vary-meta v assoc :priority p)])))))))
 
 
 (deftest ^:examples test-grammar-generation
@@ -161,7 +165,7 @@
    (gen/fmap (fn [{:keys [aliases rules]}]
                {:aliases (into {}
                                (for [[k v] aliases]
-                                 [(:value k) v])) ;; TODO: remove this.
+                                 [(:value k) v]))
                 :rules rules}))
    gen/sample
    ppm))
