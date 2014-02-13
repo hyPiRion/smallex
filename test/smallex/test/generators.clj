@@ -28,7 +28,9 @@
   (gen/elements aliases))
 
 (def collection-generators
-  (map #(gen/resize 20 %) [string char-set]))
+  (mapv vector
+        [3 1]
+        (map #(gen/resize 10 %) [string char-set])))
 
 (declare operation)
 
@@ -39,11 +41,11 @@
     (gen/sized
      (fn [size]
        (let [smaller-ops (gen/resize (dec size) (operation alias-gen))
-             arg-gen (cond-> (conj collection-generators alias-gen)
+             arg-gen (cond-> (conj collection-generators [2 alias-gen])
                              (pos? size)
                              ;; v- hack to get more nested ops
-                             (conj smaller-ops smaller-ops smaller-ops))]
-         (->> (gen/vector (gen/one-of arg-gen) 1 max-args)
+                             (conj [7 smaller-ops]))]
+         (->> (gen/vector (gen/frequency arg-gen) 1 max-args)
               (gen/fmap
                (fn [args]
                  (with-meta {:type :op, :value op, :args args}
@@ -95,9 +97,9 @@
 
 (defn expression
   [alias-gen]
-  (gen/frequency [[8 (operation alias-gen)]
-                  [4 (gen/one-of collection-generators)]
-                  [1 alias-gen]]))
+  (gen/frequency (conj collection-generators
+                       [10 (operation alias-gen)]
+                       [2 alias-gen])))
 
 (defn ppm [obj]
   (let [orig-dispatch pprint/*print-pprint-dispatch*]
