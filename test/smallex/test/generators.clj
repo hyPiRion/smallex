@@ -150,6 +150,7 @@
                                            (not (contains? alias-names %)))
                                      (gen/resize 20 gen/string-alpha-numeric))]
     (->> (gen/map rule-name-gen alias-gen)
+         (gen/not-empty)
          (gen/fmap (fn [m] ;; tag on priority on rules
                      (into {}
                            (for [[k v p] (mapv conj (shuffle (vec m)) (range))]
