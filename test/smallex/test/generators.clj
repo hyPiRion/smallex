@@ -1,6 +1,7 @@
 (ns smallex.test.generators
   (:refer-clojure :exclude [alias])
-  (:require [simple-check.generators :as gen]
+  (:require [smallex.records :as r]
+            [simple-check.generators :as gen]
             [clojure.test :refer :all]
             [clojure.pprint :as pprint :refer [pprint]]))
 
@@ -163,11 +164,14 @@
                (gen/hash-map :aliases (gen/return alias-defs)
                              :rules (rules alias-defs))))
    (gen/fmap (fn [{:keys [aliases rules]}]
-               {:aliases (into {}
-                               (for [[k v] aliases]
-                                 [(:value k) v]))
-                :rules rules}))))
+               (r/map->Grammar
+                {:aliases (into {}
+                                (for [[k v] aliases]
+                                  [(:value k) v]))
+                 :rules rules})))))
 
 
 (deftest ^:examples test-grammar-generation
-  (ppm (gen/sample grammar)))
+  (doseq [grammar (gen/sample grammar)]
+    (print(str grammar))
+    (println "-------------------------------")))
