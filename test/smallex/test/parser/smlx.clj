@@ -23,6 +23,7 @@
           :else
           matched)))
 
+;; Hack to not increase sizedness of tests by too much.
 (defmacro ^:private change-max-size
   [name max-size]
   `(alter-meta! (var ~name) assoc
@@ -31,15 +32,57 @@
                                            :max-size ~max-size)
                                :test-var (str '~name))))))
 
-(defspec def-count-equal-to-rule-count
-  (prop/for-all [grammar (gen/fmap str s-gen/grammar)]
-    (let [item-seq (-> grammar StringReader. SMLXLexer. iterator-seq)
-          parsed (smlx/parse item-seq)]
-      (testing "'def' count in legal grammar should be equal to rule count"
-        (is (= (count (:rules parsed))
-               (count (filter #(= :def (:type %)) item-seq))))))))
+(defmacro ^:private deftest-grammar
+  [name bind-names & body]
+  (let [grammar (gensym "grammar")]
+    `(do (defspec ~name
+           (prop/for-all [~grammar (gen/fmap str s-gen/grammar)]
+             (let [~@(interleave bind-names
+                                 `[(-> ~grammar StringReader.
+                                       SMLXLexer. iterator-seq)
+                                   (smlx/parse ~(first bind-names))])]
+               ~@body)))
+         (change-max-size ~name 40))))
 
-(change-max-size def-count-equal-to-rule-count 40)
+(deftest-grammar def-count-equal-to-rule-count
+  [item-seq grammar]
+  (testing "'def' count in legal grammar should be equal to rule count"
+    (is (= (count (:rules grammar))
+           (count (filter #(= :def (:type %)) item-seq))))))
+
+(deftest-grammar alias-count-equal-to-aliases
+  [item-seq grammar]
+  (testing "'alias' count in legal grammar should be equal to alias count"
+    (is (= (count (:aliases grammar))
+           (count (filter #(= :alias (:type %)) item-seq))))))
+
+(deftest-grammar equivalent-aliases
+  [item-seq grammar]
+  (testing "aliases in grammar and item-seq should be equivalent"
+    (is (= (-> grammar :aliases keys set)
+           (->> item-seq
+                (filter-afterv #(= :alias (:type %)))
+                (map :value)
+                set)))))
+
+(deftest-grammar equivalent-rules
+  [item-seq grammar]
+  (testing "rules in grammar and item-seq should be equivalent"
+    (is (= (-> grammar :rules keys set)
+           (->> item-seq
+                (filter-afterv #(= :def (:type %)))
+                (map :value)
+                set)))))
+
+(deftest-grammar dependent-rule-ordering
+  [item-seq grammar]
+  (testing "rules in grammar is prioritised by ordering from grammar file"
+    (is (= (->> (:rules grammar)
+                (sort-by (fn [[_ expr]] (-> expr meta :priority)))
+                (map key))
+           (->> item-seq
+                (filter-afterv #(= :def (:type %)))
+                (map :value))))))
 
 (deftest test-clj-spec
   (with-open [rdr (io/reader (io/resource "clojure.smlx"))]
