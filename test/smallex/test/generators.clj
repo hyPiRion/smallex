@@ -136,4 +136,32 @@
                 (gen/fmap
                  (fn [generated-alias]
                    (merge alias-map generated-alias))
-                 (alias (-> alias-map keys)))))))
+                 (alias (keys alias-map)))))))
+
+(defn rules
+  [alias-defs]
+  (let [alias-items (keys alias-defs)
+        alias-names (set (map :value alias-items))
+        alias-gen (if (seq alias-items)
+                    (gen/elements alias-items)
+                    string) ;; avoid throwing when empty
+        rule-name-gen (gen/such-that #(and (seq %)
+                                           (Character/isLetter (first %))
+                                           (not (contains? alias-names %)))
+                                     (gen/resize 20 gen/string-alpha-numeric))]
+    (gen/map rule-name-gen alias-gen)))
+
+
+(deftest ^:examples test-grammar-generation
+  (->>
+   (gen/bind (gen/sized aliases)
+             (fn [alias-defs]
+               (gen/hash-map :aliases (gen/return alias-defs)
+                             :rules (rules alias-defs))))
+   (gen/fmap (fn [{:keys [aliases rules]}]
+               {:aliases (into {}
+                               (for [[k v] aliases]
+                                 [(:value k) v])) ;; TODO: remove this.
+                :rules rules}))
+   gen/sample
+   ppm))
