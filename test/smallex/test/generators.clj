@@ -35,7 +35,7 @@
   (gen/sized
    (fn [size]
      (let [smaller-ops (gen/resize (dec size) operation)
-           arg-gen (cond-> collection-generators
+           arg-gen (cond-> (map #(gen/resize 20 %) collection-generators)
                            (pos? size) (conj smaller-ops))]
        (->> (gen/vector (gen/one-of arg-gen) 1 max-args)
             (gen/fmap
