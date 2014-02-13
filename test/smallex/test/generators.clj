@@ -173,7 +173,8 @@
                  :rules rules})))))
 
 
-(deftest ^:examples test-grammar-generation
-  (doseq [grammar (gen/sample grammar)]
-    (print(str grammar))
-    (println "-------------------------------")))
+(deftest ^:sample test-grammar-generation
+  (with-redefs [gen/make-size-range-seq (fn [& _] (repeat 10))]
+    (doseq [grammar (gen/sample grammar)]
+      (print(str grammar))
+      (println "-------------------------------"))))
