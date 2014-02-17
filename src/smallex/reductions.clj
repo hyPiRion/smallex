@@ -29,10 +29,22 @@
 
 (defn- track-cycle
   "Returns a vector with the elements of _some_ cycle which contains root. Root
-  will be both first and last element."
+  will be both first and last element of the cycle."
   [graph root]
-  ;; TODO
-  )
+  ;; Since we actually might end up in another cycle, we must backtrack if we've
+  ;; found a vertex we've already visited.
+  (letfn [(dfs [cycle-list visited to-visit]
+            (cond (= to-visit root) (conj cycle-list to-visit)
+                  (visited to-visit) nil
+                  :else
+                  (let [cycle-list (conj cycle-list to-visit)
+                        visited (conj visited to-visit)]
+                    (first
+                     (->> (map #(dfs cycle-list visited %) (get graph to-visit))
+                          (remove nil?))))))]
+    (first
+     (->> (map #(dfs [root] #{} %) (get graph root))
+          (remove nil?)))))
 
 (defn- toposort-transposed
   "Returns a topological sort of transposed graph, and throws an exception if
