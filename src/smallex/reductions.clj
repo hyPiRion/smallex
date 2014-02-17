@@ -1,5 +1,6 @@
 (ns smallex.reductions
-  (:require [clojure.walk :as walk]))
+  (:require [clojure.set :as set]
+            [clojure.walk :as walk]))
 
 (defn- find-alias-deps
   "Returns a set of alias deps, given an expression."
@@ -7,7 +8,7 @@
   (case (:type expr)
     (:string :char-set) #{}
     :symbol #{(:value expr)}
-    :op (set (mapcat find-alias-deps (:args expr)))))
+    :op (apply set/union (map find-alias-deps (:args expr)))))
 
 (defn check-cyclic-aliases
   "Given a grammar, returns an error if there is a cyclic alias. Returns nil if
