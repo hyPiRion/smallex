@@ -69,11 +69,38 @@
        (reduce dfs [[] {}] (keys graph))))))
 
 (defn expand-alias-order
-  "Given a grammar, returns the order to expand aliases in definitions, which
-  ensures no alias is unexpanded. Throws an error if there is a cyclic alias."
+  "Returns the order to expand aliases in definitions, which ensures no alias is
+  unexpanded. Throws an error if there is a cyclic alias."
   [grammar]
   (let [alias-deps (into (zipmap (keys (:aliases grammar))
                                  (repeat #{}))
                          (for [[k v] (:aliases grammar)]
                            [k (find-alias-deps v)]))]
     (toposort-transposed alias-deps)))
+
+(defn- replace-in-expr
+  "Replaces all occurences of alias symbols in the given expression with the
+  actual alias expression. Will not walk the expanded aliases."
+  [grammar expr]
+  (case (:type expr)
+    (:string :char-set) expr
+    :symbol (get-in grammar [:aliases (:value expr)])
+    :op (assoc expr
+          :args (mapv #(replace-in-expr grammar %) (:args expr)))))
+
+(defn expand-aliases
+  "Expands all alias references in both aliases and rules. Will throw an
+  exception if there are any circular aliases."
+  [grammar]
+  (let [expand-order (expand-alias-order grammar)]
+    (as-> grammar grammar
+          ;; Update aliases
+          (reduce (fn [g alias-name]
+                    (update-in g [:aliases alias-name]
+                               #(replace-in-expr g %)))
+                  grammar expand-order)
+          ;; Update rules
+          (assoc grammar :rules
+                 (into {}
+                       (for [[r-name r-expr] (:rules grammar)]
+                         [r-name (replace-in-expr grammar r-expr)]))))))
