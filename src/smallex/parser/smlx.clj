@@ -45,11 +45,16 @@
   (if (some #(contains? % (:value name-item)) (vals grammar))
     (throw (ex-info "Definition already exists." name-item))
     (let [[rem-seq expr] (end-paren parse-expr item-seq)
-          ;; Tag priority on rules (the lower, the more prioritised)
-          expr-with-meta (if (= (:type definition-type) :def)
-                           (vary-meta expr assoc
-                                      :priority (count (:rules grammar)))
-                           expr)
+          ;; Tag priority on rules (the lower, the more prioritised), along with
+          ;; name of alias expansions.
+          expr-with-meta (cond-> expr
+                                 (= (:type definition-type) :def)
+                                 (vary-meta assoc
+                                            :priority (count (:rules grammar)))
+                                 (= (:type definition-type) :alias)
+                                 (vary-meta assoc
+                                            :alias-expansion true
+                                            :alias-name (:value name-item)))
           updated-grammar (assoc-in grammar [(grammar-key definition-type)
                                              (:value name-item)] expr-with-meta)]
       [rem-seq updated-grammar])))
