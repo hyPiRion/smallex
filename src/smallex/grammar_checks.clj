@@ -22,7 +22,7 @@
 
 (defn- check-expr-arity
   "Recursively checks that an expression uses correct arity, and returns a
-  lazy seq of the erroneous calls as maps."
+  lazy seq of the erroneous calls as ExceptionInfos."
   [expr-name expr]
   (cond (not= :op (:type expr)) ()
         (-> expr meta :alias-expansion) () ;; Should be handled in resp. aliases
@@ -46,3 +46,41 @@
    (mapcat (fn [[r-name r-expr]]
              (check-expr-arity r-name r-expr))
            (:rules grammar))))
+
+(defn- check-expr-arg-type
+  "Recursively checks that an expression has correct input arg types, and
+  returns a lazy seq of the erroneous calls as ExceptionInfos."
+  [expr]
+  (if (and (= :op (:type expr))
+           (not (-> expr meta :alias-expansion)))
+    (concat
+     (case (:value expr)
+       (:cat :opt :plus :star) nil
+       :or (if (some #(not= :char-set (-> % meta :result))
+                     (:args expr))
+             (let [unexpected-arg-results
+                   (->> (:args expr)
+                        (map-indexed vector)
+                        (filter (fn [[_ e]]
+                                  (not= :char-set (-> e meta :result))))
+                        (into {}))]
+               (list
+                (ex-info "`or` requires all arguments to evaluate to char-sets."
+                         {:type :arg-type, :expr expr,
+                          :culprits unexpected-arg-results}))))
+       :not (if (-> expr :args first meta :value (not= :char-set))
+              (list
+               (ex-info "`not` requires its argument to evaluate to a char-set."
+                        {:type :arg-type, :expr expr,
+                         :culprits {0 (first (:args expr))}}))))
+     (mapcat check-expr-arg-type (:args expr)))))
+
+(defn check-arg-type
+  "Checks that all operations are given the correct argument type. Requires that
+  the :result metadata key is attached to all expressions, e.g. by invoking
+  `smallex.reductions/add-arg-results`. Returns a lazy seq of the erroneous
+  calls as ExceptionInfos."
+  [grammar]
+  (mapcat check-expr-arg-type
+          (concat (vals (:aliases grammar))
+                  (vals (:rules grammar)))))
