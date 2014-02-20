@@ -34,7 +34,7 @@
                (concat some-exn)))))
 
 (defn check-arity
-  "Checks that all operations have the correct arity. Returns a sequence of
+  "Checks that all operations have correct arity. Returns a sequence of
   erroneous calls as ExceptionInfos."
   [grammar]
   (concat

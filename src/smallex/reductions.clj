@@ -104,3 +104,52 @@
                  (into {}
                        (for [[r-name r-expr] (:rules grammar)]
                          [r-name (replace-in-expr grammar r-expr)]))))))
+
+;; Argument type checking.
+
+(defn- add-arg-type
+  "Attaches the return type of the expression. Will not recompute alias
+  expansions; will instead read off the return value by looking up the computed
+  value in the grammar."
+  [expr grammar]
+  (let [result-args (if (and (= :op (:type expr))
+                             (not (-> expr meta :alias-expansion)))
+                      (mapv #(add-arg-type % grammar) (:args expr)))
+        result-type (case (:type expr)
+                      :string :string
+                      :char-set :char-set
+                      :symbol :error
+                      ;; ^ Presumably we've done alias expansion, so this
+                      ;; shouldn't happen. Perhaps better throw and error out?
+                      :op (if (-> expr meta :alias-expansion)
+                            (-> grammar ;; Lookup alias result type.
+                                (get-in [:aliases (-> expr meta :alias-name)])
+                                meta
+                                :result)
+                            (case (:value expr)
+                              (:or :not) :char-set
+                              :cat (if (= 1 (count result-args))
+                                     (-> (first result-args) meta :result)
+                                     :string)
+                              (:plus :star :opt) :string)))]
+    (cond-> (vary-meta expr assoc :result result-type)
+            result-args
+            (assoc :args result-args))))
+
+(defn add-arg-types
+  "Returns the original grammar, where the metadata key :result has been
+  attached to expressions to show their returns types. Argument values are not
+  checked for correctness, see `check-arg-type` for such handling."
+  [grammar]
+  (let [alias-order (expand-alias-order grammar)
+        grammar (reduce (fn [g a-name]
+                          (update-in g [:aliases a-name] add-arg-type g))
+                        grammar
+                        alias-order)]
+    (assoc grammar
+      :rules (reduce
+              (fn [m r-name]
+                (update-in m [r-name] add-arg-type grammar))
+              (:rules grammar)
+              (keys (:rules grammar))))))
+
