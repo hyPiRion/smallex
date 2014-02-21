@@ -2,6 +2,23 @@
   (:require [clojure.set :as set]
             [clojure.walk :as walk]))
 
+(def ^:private full-char-set
+  "A full char-set of all possible bytes"
+  (set (map char (range 0x100))))
+
+(defn- op-of
+  [op-type]
+  (fn [expr]
+    (and (= :op (:type expr))
+         (= op-type (:value expr)))))
+
+(def ^:private cat-op? (op-of :cat))
+(def ^:private or-op? (op-of :or))
+(def ^:private not-op? (op-of :not))
+(def ^:private star-op? (op-of :star))
+(def ^:private plus-op? (op-of :plus))
+(def ^:private opt-op? (op-of :opt))
+
 (defn- find-alias-deps
   "Returns a set of alias deps, given an expression."
   [expr]
@@ -156,4 +173,96 @@
                 (update-in m [r-name] add-arg-type grammar))
               (:rules grammar)
               (keys (:rules grammar))))))
+
+(defn- setify-char-set
+  "Converts a char-set to an actual set."
+  [char-set]
+  (update-in char-set [:value] set))
+
+(defn- invert-not
+  "Inverses the not operation to a char-set."
+  [not-op]
+  {:type :char-set
+   :value (set/difference full-char-set
+                          (get-in not-op [:args 0 :value]))})
+
+(defn- flatten-cat
+  "Flattens a `cat`, whenever possible."
+  [cat-op]
+  (assoc cat-op
+    :args (->> (:args cat-op)
+               (mapcat (fn [arg] (if (cat-op? arg)
+                                  (:args arg)
+                                  [arg])))
+               vec)))
+
+(defn- reduce-cat
+  "Reduces a `cat`, whenever possible."
+  [cat-op]
+  (cond (every? #(= :string (:type %)) (:args cat-op))
+        {:type :string, :value (apply str (map :value (:args cat-op)))}
+        (= 1 (count (:args cat-op)))
+        (first (:args cat-op))
+        :else
+        cat-op))
+
+(defn- flatten-or
+  "Flattens an `or`, whenever possible."
+  [or-op]
+  (assoc or-op
+    :args (->> (:args or-op)
+               (mapcat (fn [arg] (if (or-op? arg)
+                                  (:args arg)
+                                  [arg])))
+               vec)))
+
+(defn- reduce-or
+  "Reduces an `or` whenever possible."
+  [or-op]
+  (cond (every? #(= :char-set (:type %)) (:args or-op))
+        {:type :char-set,
+         :value (apply set/union (map :value (:args or-op)))}
+        (= 1 (count (:args or-op)))
+        (first (:args or-op))
+        :else
+        or-op))
+
+(defn- expand-opt
+  "Expands (opt x) to (or \"\" x)."
+  [opt-op]
+  {:type :op, :value :or
+   :args [{:type :string, :value ""}
+          (get-in opt-op [:args 0])]})
+
+(defn- expand-plus
+  "Expands (plus x) to (cat x (star x))."
+  [plus-op]
+  {:type :op, :value :cat
+   :args [(get-in plus-op [:args 0])
+          {:type :op, :value :star,
+           :args (:args plus-op)}]})
+
+(defn- reduce-expression
+  "Reduces an expression."
+  [expr]
+  (case (:type expr)
+    :op (let [expr (assoc expr
+                     :args (mapv reduce-expression (:args expr)))]
+          (case (:value expr)
+            :cat (-> expr flatten-cat reduce-cat)
+            :or (-> expr flatten-or reduce-or)
+            :opt (expand-opt expr)
+            :plus (expand-plus expr)
+            :star expr))
+    :char-set (setify-char-set expr)
+    :string expr))
+
+(defn reduce-rules
+  "Reduces all rules within the grammar."
+  [grammar]
+  ;; TODO: memoize alias reductions perhaps?
+  (assoc grammar
+    :rules (into {}
+                 (for [[r-name r-expr] (:rules grammar)]
+                   [r-name (reduce-expression r-expr)]))))
 
