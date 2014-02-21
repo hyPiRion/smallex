@@ -1,6 +1,7 @@
 (ns smallex.reductions
   (:require [clojure.set :as set]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [smallex.utils :as utils :refer [map-vals]]))
 
 (def ^:private full-char-set
   "A full char-set of all possible bytes"
@@ -117,10 +118,7 @@
                                #(replace-in-expr g %)))
                   grammar expand-order)
           ;; Update rules
-          (assoc grammar :rules
-                 (into {}
-                       (for [[r-name r-expr] (:rules grammar)]
-                         [r-name (replace-in-expr grammar r-expr)]))))))
+          (update-in grammar [:rules] map-vals #(replace-in-expr grammar %)))))
 
 ;; Argument type checking.
 
@@ -261,8 +259,5 @@
   "Reduces all rules within the grammar."
   [grammar]
   ;; TODO: memoize alias reductions perhaps?
-  (assoc grammar
-    :rules (into {}
-                 (for [[r-name r-expr] (:rules grammar)]
-                   [r-name (reduce-expression r-expr)]))))
+  (update-in grammar [:rules] map-vals reduce-expression))
 

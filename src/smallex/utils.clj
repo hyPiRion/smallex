@@ -54,3 +54,25 @@
 
 (defn supported-lang? [lang]
   false)
+
+(defn aside
+  "Takes a sequence of functions and returns a fn that takes a single value, a
+  sequence of values. The return value is a vector where the first function is
+  applied to the first element, the second function to the second element, and
+  so on. The sequence will be padded with nils, if there aren't enough
+  elements in the vector.
+  ((aside f g h) [x y z]) => [(f x) (g y) (h z)]"
+  ([f] (fn [[x]] [(f x)]))
+  ([f g] (fn [[x y]] [(f x) (g y)]))
+  ([f g h] (fn [[x y z]] [(f x) (g y) (h z)]))
+  ([f g h & fs]
+     (let [fs (list* f g h fs)]
+       (fn [args]
+         (mapv #(%1 %2) fs args)))))
+
+(defn map-vals
+  "Takes a map m and a function f, and applies f to all values in m."
+  [m f]
+  (->> (seq m)
+       (map (aside identity f))
+       (into {})))
