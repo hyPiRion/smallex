@@ -11,7 +11,9 @@
     {:result :char}))
 
 (def char-set
-  (gen/fmap (comp set->char-set set) (gen/vector gen/char)))
+  (->> (gen/vector gen/char)
+       (gen/not-empty)
+       (gen/fmap (comp set->char-set set))))
 
 (defn- string->item-string [s]
   (with-meta
