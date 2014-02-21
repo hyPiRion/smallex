@@ -1,5 +1,9 @@
 (ns smallex.grammar-checks)
 
+(defn- unexpanded-op? [expr]
+  (and (= :op (:type expr))
+       (not (-> expr meta :alias-expansion))))
+
 (def ^:private single-arg-op?
   "Returns true if the op is a single-argument op, false otherwise."
   #{:star :plus :opt :not})
@@ -24,14 +28,12 @@
   "Recursively checks that an expression uses correct arity, and returns a
   lazy seq of the erroneous calls as ExceptionInfos."
   [expr-name expr]
-  (cond (not= :op (:type expr)) ()
-        (-> expr meta :alias-expansion) () ;; Should be handled in resp. aliases
-        :else
-        (let [some-exn (op-arity-exn expr-name expr)]
-          (->> (:args expr)
-               (map #(check-expr-arity expr-name %))
-               (apply concat)
-               (concat some-exn)))))
+  (if (unexpanded-op? expr)
+    (let [some-exn (op-arity-exn expr-name expr)]
+      (->> (:args expr)
+           (map #(check-expr-arity expr-name %))
+           (apply concat)
+           (concat some-exn)))))
 
 (defn check-arity
   "Checks that all operations have correct arity. Returns a sequence of
@@ -51,8 +53,7 @@
   "Recursively checks that an expression has correct input arg types, and
   returns a lazy seq of the erroneous calls as ExceptionInfos."
   [expr]
-  (if (and (= :op (:type expr))
-           (not (-> expr meta :alias-expansion)))
+  (if (unexpanded-op? expr)
     (concat
      (case (:value expr)
        (:cat :opt :plus :star :or) nil
@@ -85,8 +86,7 @@
           (list (ex-info "Couldn't find the definition for symbol."
                          {:type :symbol-ref, :expr expr})))
         ;; ^^ TODO: Damerau-Levensthein? =)
-        (and (= :op (:type expr))
-             (not (-> expr meta :alias-expansion)))
+        (unexpanded-op? expr)
         (mapcat #(check-expr-symbol-refs g %) (:args expr))
         :else nil))
 
