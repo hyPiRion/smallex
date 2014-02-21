@@ -23,8 +23,8 @@
                :string)}))
 
 (def string
-  (gen/fmap string->item-string
-            (gen/not-empty gen/string-alpha-numeric)))
+  (->> (gen/not-empty gen/string-alpha-numeric)
+       (gen/fmap string->item-string)))
 
 (defn use-alias [aliases]
   (gen/elements aliases))
@@ -119,11 +119,13 @@
   (let [alias-gen (if (seq prev-aliases)
                     (gen/elements prev-aliases)
                     string) ;; avoid throwing when empty
-        alias-name (gen/such-that #(and (seq %)
-                                        (Character/isLetter (first %))
-                                        (not-any? (fn [e] (= % (:value e)))
-                                                  prev-aliases))
-                                  (gen/resize 20 gen/string-alpha-numeric))
+        alias-name (gen/such-that
+                    #(and (seq %)
+                          (Character/isLetter (first %))
+                          (not-any? (fn [e] (= % (:value e))) prev-aliases)
+                          (not (contains? #{"or" "cat" "star" "alias" "def"
+                                            "plus" "opt"} %)))
+                    (gen/resize 20 gen/string-alpha-numeric))
         expr (expression alias-gen)]
     (->> (gen/tuple alias-name expr)
          (gen/fmap (fn [[alias-name expr]]
@@ -150,10 +152,13 @@
         alias-gen (if (seq alias-items)
                     (gen/elements alias-items)
                     string) ;; avoid throwing when empty
-        rule-name-gen (gen/such-that #(and (seq %)
-                                           (Character/isLetter (first %))
-                                           (not (contains? alias-names %)))
-                                     (gen/resize 20 gen/string-alpha-numeric))]
+        rule-name-gen (gen/such-that
+                       #(and (seq %)
+                             (Character/isLetter (first %))
+                             (not (contains? alias-names %))
+                             (not (contains? #{"or" "cat" "star" "alias" "def"
+                                               "plus" "opt"} %)))
+                       (gen/resize 20 gen/string-alpha-numeric))]
     (->> (gen/map rule-name-gen (expression alias-gen))
          (gen/not-empty)
          (gen/fmap (fn [m] ;; tag on priority on rules
