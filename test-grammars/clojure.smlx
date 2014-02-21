@@ -25,8 +25,8 @@
 
 (alias float' (cat (opt [+-])
                    digits
-                   (opt "." (star digit))
-                   (opt [eE] (opt [-+]) digits)))
+                   (opt (cat "." (star digit)))
+                   (opt (cat [eE] (opt [-+]) digits))))
 (def float float')
 
 (def big (or (cat int' "N")
