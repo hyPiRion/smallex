@@ -1,9 +1,9 @@
 (ns smallex.test.parser.smlx
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [simple-check.clojure-test :as ct :refer [defspec]]
-            [simple-check.generators :as gen]
-            [simple-check.properties :as prop]
+            [clojure.test.check.clojure-test :as ct :refer [defspec]]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as prop]
             [smallex.parser.smlx :as smlx]
             [smallex.test.generators :as s-gen])
   (:import (com.hypirion.smallex SMLXLexer)

@@ -1,7 +1,7 @@
 (ns smallex.test.generators
   (:refer-clojure :exclude [alias])
   (:require [smallex.records :as r]
-            [simple-check.generators :as gen]
+            [clojure.test.check.generators :as gen]
             [clojure.test :refer :all]
             [clojure.pprint :as pprint :refer [pprint]]))
 
