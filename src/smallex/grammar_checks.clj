@@ -55,19 +55,7 @@
            (not (-> expr meta :alias-expansion)))
     (concat
      (case (:value expr)
-       (:cat :opt :plus :star) nil
-       :or (if (some #(not= :char-set (-> % meta :result))
-                     (:args expr))
-             (let [unexpected-arg-results
-                   (->> (:args expr)
-                        (map-indexed vector)
-                        (filter (fn [[_ e]]
-                                  (not= :char-set (-> e meta :result))))
-                        (into {}))]
-               (list
-                (ex-info "`or` requires all arguments to evaluate to char-sets."
-                         {:type :arg-type, :expr expr,
-                          :culprits unexpected-arg-results}))))
+       (:cat :opt :plus :star :or) nil
        :not (if (-> expr :args first meta :value (not= :char-set))
               (list
                (ex-info "`not` requires its argument to evaluate to a char-set."

@@ -127,7 +127,11 @@
                                 meta
                                 :result)
                             (case (:value expr)
-                              (:or :not) :char-set
+                              :not :char-set
+                              :or (if (every? #(-> % meta :result (= :char-set))
+                                              (:args expr))
+                                    :char-set
+                                    :string)
                               :cat (if (= 1 (count result-args))
                                      (-> (first result-args) meta :result)
                                      :string)
