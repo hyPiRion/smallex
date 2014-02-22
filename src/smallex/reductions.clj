@@ -185,7 +185,7 @@
                           (get-in not-op [:args 0 :value]))})
 
 (defn- flatten-cat
-  "Flattens a `cat`, whenever possible."
+  "Flattens a `cat` inside a `cat`, whenever possible."
   [cat-op]
   (assoc cat-op
     :args (->> (:args cat-op)
@@ -198,6 +198,8 @@
   "Reduces a `cat`, whenever possible."
   [cat-op]
   (cond (every? #(= :string (:type %)) (:args cat-op))
+        ;; This is not general enough. (cat "f" "g" expr [x] "y") could be
+        ;; reduced to (cat "fg" expr "xy")
         {:type :string, :value (apply str (map :value (:args cat-op)))}
         (= 1 (count (:args cat-op)))
         (first (:args cat-op))
@@ -205,7 +207,7 @@
         cat-op))
 
 (defn- flatten-or
-  "Flattens an `or`, whenever possible."
+  "Flattens an `or` inside an `or`, whenever possible."
   [or-op]
   (assoc or-op
     :args (->> (:args or-op)
@@ -218,6 +220,8 @@
   "Reduces an `or` whenever possible."
   [or-op]
   (cond (every? #(= :char-set (:type %)) (:args or-op))
+        ;; Not general enough. (or [ax] expr [by] "c") could be reduced to
+        ;; (or [abcxy] expr).
         {:type :char-set,
          :value (apply set/union (map :value (:args or-op)))}
         (= 1 (count (:args or-op)))
