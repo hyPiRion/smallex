@@ -13,8 +13,7 @@
   :test-selectors {:default (complement :sample)}
   :profiles {:dev {:plugins [[codox "0.6.4"]]
                    :codox {:output-dir "codox"}
-                   :repositories {"sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"}
-                   :dependencies [[org.clojure/test.check "0.5.7-SNAPSHOT"]]
+                   :dependencies [[org.clojure/test.check "0.5.7"]]
                    :resource-paths ["test-grammars"]}
              :uberjar {:aot :all}}
   :deploy-branches ["stable"]
