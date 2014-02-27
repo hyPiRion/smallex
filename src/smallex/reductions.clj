@@ -220,14 +220,19 @@
   "Reduces an `or` whenever possible."
   [or-op]
   (cond (every? #(= :char-set (:type %)) (:args or-op))
-        ;; Not general enough. (or [ax] expr [by] "c") could be reduced to
-        ;; (or [abcxy] expr).
         {:type :char-set,
          :value (apply set/union (map :value (:args or-op)))}
         (= 1 (count (:args or-op)))
         (first (:args or-op))
         :else
-        or-op))
+        (let [grouped (group-by (comp :type meta) (:args or-op))
+              char-sets (apply set/union (map :value (:char-set grouped)))]
+          {:type :string ;; <- exists at least one :string
+           :value (vec
+                   (cond-> (:string grouped)
+                           (seq char-sets)
+                           (conj {:type :char-set
+                                  :value char-sets})))})))
 
 (defn- expand-opt
   "Expands (opt x) to (or \"\" x)."
