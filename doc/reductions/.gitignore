@@ -1,0 +1,12 @@
+*.toc
+*.bbl
+*.blg
+*.log
+*.out
+*.lof
+*.lot
+*.lol
+*.aux
+*.pyg
+*.fdb_latexmk
+reductions.pdf
