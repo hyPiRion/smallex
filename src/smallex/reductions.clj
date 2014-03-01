@@ -281,6 +281,7 @@
             :or (-> expr flatten-or reduce-or)
             :opt (expand-opt expr)
             :plus (expand-plus expr)
+            :not (invert-not expr)
             :star expr))
     :char-set (setify-char-set expr)
     :string expr))
