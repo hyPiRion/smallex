@@ -180,9 +180,12 @@
 (defn- invert-not
   "Inverses the not operation to a char-set."
   [not-op]
-  {:type :char-set
-   :value (set/difference full-char-set
-                          (get-in not-op [:args 0 :value]))})
+  (with-meta
+    {:type :char-set
+     :value (set/difference full-char-set
+                            (get-in not-op [:args 0 :value]))}
+    (merge (meta not-op)
+           {:type :char-set})))
 
 (defn- flatten-cat
   "Flattens a `cat` inside a `cat`, whenever possible."
@@ -200,7 +203,11 @@
   (cond (every? #(= :string (:type %)) (:args cat-op))
         ;; This is not general enough. (cat "f" "g" expr [x] "y") could be
         ;; reduced to (cat "fg" expr "xy")
-        {:type :string, :value (apply str (map :value (:args cat-op)))}
+        (with-meta
+          {:type :op, :value :cat,
+           :args (apply str (map :value (:args cat-op)))}
+          (merge (meta cat-op)
+                 {:type :string}))
         (= 1 (count (:args cat-op)))
         (first (:args cat-op))
         :else
@@ -220,34 +227,48 @@
   "Reduces an `or` whenever possible."
   [or-op]
   (cond (every? #(= :char-set (:type %)) (:args or-op))
-        {:type :char-set,
-         :value (apply set/union (map :value (:args or-op)))}
+        (with-meta
+          {:type :char-set,
+           :value (apply set/union (map :value (:args or-op)))}
+          (merge (meta or-op)
+                 {:type :char-set}))
         (= 1 (count (:args or-op)))
         (first (:args or-op))
         :else
         (let [grouped (group-by (comp :type meta) (:args or-op))
               char-sets (apply set/union (map :value (:char-set grouped)))]
-          {:type :string ;; <- exists at least one :string
-           :value (vec
-                   (cond-> (:string grouped)
-                           (seq char-sets)
-                           (conj {:type :char-set
-                                  :value char-sets})))})))
+          (with-meta
+            {:type :op, :value :or
+             :args (vec
+                    (cond-> (concat (grouped nil) (:string grouped))
+                            (seq char-sets)
+                            (conj {:type :char-set
+                                   :value char-sets})))}
+            (merge (meta or-op)
+                    {:type :string}))))) ;; <- exists at least one :string
 
 (defn- expand-opt
   "Expands (opt x) to (or \"\" x)."
   [opt-op]
-  {:type :op, :value :or
-   :args [{:type :string, :value ""}
-          (get-in opt-op [:args 0])]})
+  (with-meta
+    {:type :op, :value :or
+     :args [(with-meta {:type :string, :value ""}
+              {:type :string})
+            (get-in opt-op [:args 0])]}
+    {:type :string}))
 
 (defn- expand-plus
   "Expands (plus x) to (cat x (star x))."
   [plus-op]
-  {:type :op, :value :cat
-   :args [(get-in plus-op [:args 0])
-          {:type :op, :value :star,
-           :args (:args plus-op)}]})
+  (with-meta
+    {:type :op, :value :cat
+     :args [(get-in plus-op [:args 0])
+            (with-meta
+              {:type :op, :value :star,
+               :args (:args plus-op)}
+              {:type :string})]}
+    (merge (meta plus-op)
+           {:type :string})))
 
 (defn- reduce-expression
   "Reduces an expression."
